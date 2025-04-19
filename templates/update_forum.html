@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h2>Update Forum: {{ forum.name }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" class="mt-3">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="name">Forum Name</label>
+                    <input type="text" name="name" id="name" class="form-control" value="{{ forum.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea name="description" id="description"
+                        class="form-control">{{ forum.description }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary animated-button">Update Forum</button>
+                <a href="{% url 'home' %}" class="btn btn-secondary animated-button">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+<button id="back-to-top" title="Back to Top">↑</button>
+{% endblock %}

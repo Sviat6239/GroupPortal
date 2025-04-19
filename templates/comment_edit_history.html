@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h2>Edit History for Comment</h2>
+        </div>
+        <div class="card-body">
+            {% if history %}
+            <ul class="list-group">
+                {% for edit in history %}
+                <li class="list-group-item">
+                    <p><strong>Edited by:</strong> {{ edit.user.username }}</p>
+                    <p><strong>Edited at:</strong> {{ edit.edited_at }}</p>
+                    <p><strong>Old Content:</strong> {{ edit.old_content }}</p>
+                    <p><strong>New Content:</strong> {{ edit.new_content }}</p>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No edit history available.</p>
+            {% endif %}
+            <a href="{% url 'home' %}" class="btn btn-secondary animated-button mt-3">Back</a>
+        </div>
+    </div>
+</div>
+<button id="back-to-top" title="Back to Top">↑</button>
+{% endblock %}

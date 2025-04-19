@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h2>Add New Tag</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" class="mt-3">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="name">Tag Name</label>
+                    <input type="text" name="name" id="name" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary animated-button">Create Tag</button>
+                <a href="{% url 'home' %}" class="btn btn-secondary animated-button">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+<button id="back-to-top" title="Back to Top">↑</button>
+{% endblock %}

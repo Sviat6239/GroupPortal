@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h2>Poll Results: {{ poll.question }}</h2>
+        </div>
+        <div class="card-body">
+            {% if total_votes > 0 %}
+            <ul class="list-group">
+                {% for result in results %}
+                <li class="list-group-item">
+                    <p><strong>{{ result.option.text }}</strong>: {{ result.votes }} votes ({{
+                        result.votes|floatformat:1|default:0 }}%)</p>
+                </li>
+                {% endfor %}
+            </ul>
+            <p class="mt-3"><strong>Total Votes:</strong> {{ total_votes }}</p>
+            {% else %}
+            <p>No votes yet.</p>
+            {% endif %}
+            <a href="{% url 'home' %}" class="btn btn-secondary animated-button mt-3">Back</a>
+        </div>
+    </div>
+</div>
+<button id="back-to-top" title="Back to Top">↑</button>
+{% endblock %}

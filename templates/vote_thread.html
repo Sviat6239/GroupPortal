@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h2>Vote on Thread: {{ thread.title }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" class="mt-3">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="vote_type">Vote</label>
+                    <select name="vote_type" id="vote_type" class="form-control">
+                        <option value="up">Upvote</option>
+                        <option value="down">Downvote</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary animated-button">Submit Vote</button>
+                <a href="{% url 'home' %}" class="btn btn-secondary animated-button">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+<button id="back-to-top" title="Back to Top">↑</button>
+{% endblock %}
