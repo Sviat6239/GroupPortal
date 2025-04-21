@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    h2 {
+        text-align: center;
+    }
+    table {
+        border: 1px solid black;
+        width: 100%;
+        align-items: center;
+    }
+    tr, th, td {
+        border: 1px solid black;
+        text-align: center;
+    }
+</style>
+
+<h2>Щоденник</h2>
+
+<a href="{% url 'add-student' %}">Додати студента</a>
+<a href="{% url 'add-subject' %}">Додати предмет</a>
+<a href="{% url 'add-grade' %}">Додати оцінку студенту</a>
+
+<table>
+
+    <thead>
+        <tr>
+            <th rowspan="2">Учень</th>
+            <th colspan="{{ subjects|length }}">Предмет</th>
+        </tr>
+        <tr>
+            {% for subject in subjects %}
+            <th>{{ subject.name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td>{{ student.first_name }} {{student.last_name}}</td>
+            {% for subject in subjects %}
+                <td data-student="{{ student.id }}" data-subject="{{ subject.id }}"></td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+
+<!-- <pre>{{ grade_dict_json }}</pre> -->
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const gradeDict = JSON.parse('{{ grade_dict_json|escapejs }}');
+        const cells = document.querySelectorAll('td[data-student][data-subject]');
+
+        cells.forEach(cell => {
+            const studentId = cell.getAttribute('data-student');
+            const subjectId = cell.getAttribute('data-subject');
+            const key = `${studentId}_${subjectId}`;
+
+            const grade = gradeDict[key];
+            if (grade && grade.length > 0) {
+                cell.innerHTML = grade.map(g => `${g.grade}`).join('<br>');
+
+            }
+        });
+    });
+</script>
+
+
+{% endblock %}

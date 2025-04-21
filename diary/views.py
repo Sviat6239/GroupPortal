@@ -1,3 +1,65 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+from diary.models import Student, Subject, Grade
+from diary.forms import StudentForm, SubjectForm, GradeForm
+from django.core.serializers.json import DjangoJSONEncoder
+import json
+
 
 # Create your views here.
+def diary_view(request):
+    """
+    Diary view function to render the diary page.
+    """
+    students = Student.objects.all()
+    subjects = Subject.objects.all()
+    grades = Grade.objects.all()
+
+    grade_dict = {}
+    for grade in grades:
+        key = f"{grade.student.id}_{grade.subject.id}"
+        if key not in grade_dict:
+            grade_dict[key] = []
+        grade_dict[key].append({
+            'grade': grade.grade,
+        })
+
+    context = {
+        'students': students,
+        'subjects': subjects,
+        'grade_dict_json': json.dumps(grade_dict, cls=DjangoJSONEncoder),
+    }
+
+    return render(request, 'diary/diary.html', context)
+
+
+def add_student(request):
+    if request.method == "POST":
+        form = StudentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('diary')
+    else:
+        form = StudentForm()
+    return render(request, 'diary/add_student.html', {'form': form})
+
+
+def add_subject(request):
+    if request.method == "POST":
+        form = SubjectForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('diary')
+    else:
+        form = SubjectForm()
+    return render(request, 'diary/add_subject.html', {'form': form})
+
+
+def add_grade(request):
+    if request.method == "POST":
+        form = GradeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('diary')
+    else:
+        form = GradeForm()
+    return render(request, 'diary/add_grade.html', {'form': form})

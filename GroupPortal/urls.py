@@ -3,6 +3,7 @@ from django.urls import path
 from GroupPortal.views import about, index, contacts, dashboard
 from forum.views import error, success, create_comment, create_forum, create_poll, create_thread, view_comment_edit_history, view_thread_edit_history, update_category, update_comment, update_forum, update_poll, update_tag, update_thread, vote_comment, vote_poll, vote_thread, add_category, add_tag, confirm_action, confirm_delete, view_poll_results, recent_activity
 from authentification.views import register_view, login_view, logout_view
+from diary.views import diary_view, add_student, add_subject, add_grade
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -42,5 +43,11 @@ urlpatterns = [
     path('confirm-action/', confirm_action, name='confirm_action'),
     path('confirm-delete/', confirm_delete, name='confirm_delete'),
     path('poll-results/', view_poll_results, name='poll_results'),
-    path('recent/', recent_activity, name='recent_activity')
+    path('recent/', recent_activity, name='recent_activity'),
+
+    # Diary URLs
+    path('diary/', diary_view, name='diary'),
+    path('add-student/', add_student, name='add-student'),
+    path('add-subject/', add_subject, name='add-subject'),
+    path('add-grade/', add_grade, name='add-grade'),
 ]

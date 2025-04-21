@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'GroupPortal',
     'authentification',
     'forum',
+    'diary',
 ]
 
 MIDDLEWARE = [
