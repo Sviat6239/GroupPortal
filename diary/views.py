@@ -43,6 +43,18 @@ def add_student(request):
     return render(request, 'diary/add_student.html', {'form': form})
 
 
+def edit_student(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    if request.method == "POST":
+        form = StudentForm(request.POST, instance=student)
+        if form.is_valid():
+            form.save()
+            return redirect('diary')
+    else:
+        form = StudentForm(instance=student)
+    return render(request, 'diary/edit_student.html', {'form': form})
+
+
 def add_subject(request):
     if request.method == "POST":
         form = SubjectForm(request.POST)
@@ -54,6 +66,18 @@ def add_subject(request):
     return render(request, 'diary/add_subject.html', {'form': form})
 
 
+def edit_subject(request, subject_id):
+    subject = get_object_or_404(Subject, id=subject_id)
+    if request.method == "POST":
+        form = SubjectForm(request.POST, instance=subject)
+        if form.is_valid():
+            form.save()
+            return redirect('diary')
+    else:
+        form = SubjectForm(instance=subject)
+    return render(request, 'diary/edit_subject.html', {'form': form})
+
+
 def add_grade(request):
     if request.method == "POST":
         form = GradeForm(request.POST)
@@ -63,3 +87,15 @@ def add_grade(request):
     else:
         form = GradeForm()
     return render(request, 'diary/add_grade.html', {'form': form})
+
+
+def edit_grade(request, grade_id):
+    grade = get_object_or_404(Grade, id=grade_id)
+    if request.method == "POST":
+        form = GradeForm(request.POST, instance=grade)
+        if form.is_valid():
+            form.save()
+            return redirect('diary')
+    else:
+        form = GradeForm(instance=grade)
+    return render(request, 'diary/edit_grade.html', {'form': form})
