@@ -1,8 +1,8 @@
 from django.db import models
-from authentification.models import AbstractCustomUser
+from authentification.models import CustomUser
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(AbstractCustomUser, on_delete=models.CASCADE, related_name='profile')
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
     bio = models.TextField(max_length=500, blank=True)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     location = models.CharField(max_length=100, blank=True)
@@ -24,7 +24,7 @@ class Achievement(models.Model):
         return self.name
 
 class UserAchievement(models.Model):
-    user = models.ForeignKey(AbstractCustomUser, on_delete=models.CASCADE, related_name='achievements')
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='achievements')
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
     earned_at = models.DateTimeField(auto_now_add=True)
 
@@ -48,7 +48,7 @@ class Tag(models.Model):
         return self.name
 
 class Forum(models.Model):
-    author = models.ForeignKey(AbstractCustomUser, on_delete=models.SET_NULL, null=True, related_name='forums')
+    author = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='forums')
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     categories = models.ManyToManyField(Category, blank=True, related_name='forums')
@@ -70,7 +70,7 @@ class Thread(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
-    author = models.ForeignKey(AbstractCustomUser, on_delete=models.SET_NULL, null=True, related_name='threads')
+    author = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='threads')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='threads')
     tags = models.ManyToManyField(Tag, blank=True, related_name='threads')
     views = models.PositiveIntegerField(default=0)
@@ -86,7 +86,7 @@ class Thread(models.Model):
         return self.title
 
 class ThreadSubscription(models.Model):
-    user = models.ForeignKey(AbstractCustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     subscribed_at = models.DateTimeField(auto_now_add=True)
 
@@ -94,7 +94,7 @@ class ThreadSubscription(models.Model):
         unique_together = ('user', 'thread')
 
 class SavedThread(models.Model):
-    user = models.ForeignKey(AbstractCustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     saved_at = models.DateTimeField(auto_now_add=True)
 
@@ -102,14 +102,14 @@ class SavedThread(models.Model):
         unique_together = ('user', 'thread')
 
 class ThreadEditHistory(models.Model):
-    user = models.ForeignKey(AbstractCustomUser, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     old_content = models.TextField()
     new_content = models.TextField()
     edited_at = models.DateTimeField(auto_now_add=True)
 
 class ThreadVote(models.Model):
-    user = models.ForeignKey(AbstractCustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     vote_type = models.CharField(max_length=10, choices=[('up', 'Upvote'), ('down', 'Downvote')])
     voted_at = models.DateTimeField(auto_now_add=True)
@@ -129,7 +129,7 @@ class PollOption(models.Model):
     text = models.CharField(max_length=255)
 
 class PollVote(models.Model):
-    user = models.ForeignKey(AbstractCustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     option = models.ForeignKey(PollOption, on_delete=models.CASCADE)
     voted_at = models.DateTimeField(auto_now_add=True)
 
@@ -141,7 +141,7 @@ class PollVote(models.Model):
 class Comment(models.Model):
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE, related_name='comments')
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE, null=True, blank=True, related_name='comments')
-    author = models.ForeignKey(AbstractCustomUser, on_delete=models.SET_NULL, null=True, related_name='comments')
+    author = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='comments')
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     content = models.TextField()
     attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
@@ -157,14 +157,14 @@ class Comment(models.Model):
         return f"Comment by {self.author} on {self.thread.title}"
 
 class CommentEditHistory(models.Model):
-    user = models.ForeignKey(AbstractCustomUser, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
     old_content = models.TextField()
     new_content = models.TextField()
     edited_at = models.DateTimeField(auto_now_add=True)
 
 class CommentVote(models.Model):
-    user = models.ForeignKey(AbstractCustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
     vote_type = models.CharField(max_length=10, choices=[('up', 'Upvote'), ('down', 'Downvote')])
     voted_at = models.DateTimeField(auto_now_add=True)

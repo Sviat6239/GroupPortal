@@ -1,7 +1,7 @@
 from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import render, redirect
 from .forms import UserRegisterForm, CustomLoginForm
-from authentification.models import AbstractCustomUser
+from authentification.models import CustomUser
 
 def register_view(request):
     if request.method == 'POST':
@@ -11,7 +11,7 @@ def register_view(request):
             user.set_password(form.cleaned_data['password'])
             user.save()
             login(request, user)
-            return redirect('dashboard')  
+            return redirect('dashboard')
     else:
         form = UserRegisterForm()
     return render(request, 'register.html', {'form': form})

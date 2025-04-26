@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Forum List</h2>
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3>Available Forums</h3>
+        </div>
+        <div class="card-body">
+            {% for forum in forums %}
+            <div class="mb-3">
+                <a href="{% url 'forum_detail' forum.id %}">{{ forum.name }}</a>
+                <p><small>{{ forum.description|truncatewords:20 }}</small></p>
+            </div>
+            {% empty %}
+            <p>No forums available.</p>
+            {% endfor %}
+            <a href="{% url 'create_forum' %}" class="btn btn-primary">Create New Forum</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
