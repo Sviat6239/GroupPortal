@@ -1,30 +1,52 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
 from forum.models import Category, Tag, Forum, Thread, ThreadSubscription, SavedThread, ThreadEditHistory, ThreadVote, Comment, CommentEditHistory, CommentVote, Poll, PollOption, PollVote
 from forum.forms import CategoryForm, TagForm, ForumForm, ThreadForm, CommentForm, PollForm
-from django.db.models import Q
 from django.utils.timezone import now, timedelta
 
 #Додати логіку профіля користувача та досягнень
 
+
 def error(request):
     return render(request, 'error.html', {'message': 'An error occurred.'})
+
 
 def success(request):
     return render(request, 'success.html', {'message': 'Operation successful.'})
 
+@login_required
 def confirm_action(request):
     return render(request, 'confirm_action.html', {'message': 'Are you sure you want to proceed with this action?'})
 
+@login_required
 def confirm_delete(request):
     return render(request, 'confirm_delete.html', {'message': 'Are you sure you want to delete this item?'})
 
+@login_required
+def dashboard(request):
+    if request.user.is_authenticated:
+        threads = Thread.objects.filter(author=request.user).order_by('-created_at')
+        comments = Comment.objects.filter(author=request.user).order_by('-created_at')
+        polls = Poll.objects.filter(thread__author=request.user).order_by('-created_at')
+        return render(request, 'dashboard.html', {'threads': threads, 'comments': comments, 'polls': polls})
+    else:
+        return redirect('login')
+
 def recent_activity(request):
     last_week = now() - timedelta(days=7)
-    threads = Thread.objects.filter(created_at__gte=last_week).order_by('-created_at')
-    comments = Comment.objects.filter(created_at__gte=last_week).order_by('-created_at')
-    polls = Poll.objects.filter(created_at__gte=last_week).order_by('-created_at')
+
+    threads = Thread.objects.filter(
+        created_at__gte=last_week,
+        is_deleted=False
+    ).order_by('-created_at').select_related('category')
+    comments = Comment.objects.filter(
+        created_at__gte=last_week,
+        is_deleted=False
+    ).order_by('-created_at').select_related('thread')
+    polls = Poll.objects.filter(
+        created_at__gte=last_week,
+        thread__is_deleted=False
+    ).order_by('-created_at').select_related('thread')
 
     category_id = request.GET.get('category')
     forum_id = request.GET.get('forum')
@@ -37,8 +59,8 @@ def recent_activity(request):
         threads = threads.filter(category__forum_id=forum_id)
         polls = polls.filter(thread__category__forum_id=forum_id)
     if tag_id:
-        threads = threads.filter(tags__id=tag_id)
-        polls = polls.filter(thread__tags__id=tag_id)
+        threads = threads.filter(tags__id=tag_id).distinct()
+        polls = polls.filter(thread__tags__id=tag_id).distinct()
 
     context = {
         'threads': threads,
@@ -48,8 +70,8 @@ def recent_activity(request):
         'forums': Forum.objects.all(),
         'tags': Tag.objects.all(),
     }
+
     return render(request, 'recent_activity.html', context)
-    
 
 # ----- Category Views -----
 @login_required
@@ -166,35 +188,60 @@ def delete_forum(request, forum_id):
 
     return render(request, "confirm_delete.html", {"forum": forum})
 
+def forum_list(request):
+    forums = Forum.objects.all().order_by('name')
+    return render(request, 'forum_list.html', {'forums': forums})
 
+def forum_detail(request, forum_id):
+    forum = get_object_or_404(Forum, id=forum_id)
+    categories = forum.categories.all()
+    threads = Thread.objects.filter(category__in=categories, is_deleted=False).order_by('-created_at').select_related('category', 'author')
+    threads_without_category = Thread.objects.filter(category__isnull=True, is_deleted=False).order_by('-created_at').select_related('author')
+    threads = threads | threads_without_category
+    polls = Poll.objects.filter(thread__category__in=categories, thread__is_deleted=False).order_by('-created_at').select_related('thread__author')
+    return render(request, 'forum_detail.html', {
+        'forum': forum,
+        'threads': threads.distinct(),
+        'polls': polls,
+        'categories': categories,
+    })
+    
 # ----- Thread Views -----
 @login_required
 def create_thread(request):
-    if request.method == "POST":
-        title = request.POST.get("title")
-        description = request.POST.get("description")
-        category_id = request.POST.get("category")
-        tag_ids = request.POST.getlist("tags")
-        status = request.POST.get("status", "open")
-        attachment = request.FILES.get("attachment")
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        category_id = request.POST.get('category')
+        tag_ids = request.POST.getlist('tags')
+        status = request.POST.get('status')
+        attachment = request.FILES.get('attachment')
 
         if title and description:
-            thread = Thread(
+            thread = Thread.objects.create(
                 title=title,
                 description=description,
-                author=request.user,
                 category_id=category_id or None,
-                status=status,
+                author=request.user,
+                status=status or 'open',
                 attachment=attachment
             )
-            thread.save()
             if tag_ids:
                 thread.tags.set(tag_ids)
-            return render(request, "success.html", {"message": "Thread created successfully!"})
-        return render(request, "error.html", {"message": "Title and description are required."})
+            return redirect('thread_detail', thread_id=thread.id)
+        return render(request, 'error.html', {'message': 'Title and description are required.'})
+
+    forum_id = request.GET.get('forum')
     categories = Category.objects.all()
+    if forum_id:
+        forum = Forum.objects.get(id=forum_id)
+        categories = forum.categories.all()
     tags = Tag.objects.all()
-    return render(request, "create_thread.html", {"categories": categories, "tags": tags})
+    return render(request, 'create_thread.html', {
+        'categories': categories,
+        'tags': tags,
+        'forum_id': forum_id
+    })
 
 @login_required
 def update_thread(request, thread_id):
@@ -292,58 +339,74 @@ def view_thread_edit_history(request, thread_id):
     history = ThreadEditHistory.objects.filter(thread=thread).order_by('-edited_at')
     return render(request, "thread_edit_history.html", {"thread": thread, "history": history})
 
+def thread_detail(request, thread_id):
+    thread = get_object_or_404(Thread, id=thread_id)
+
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.thread = thread
+            comment.author = request.user
+            comment.save()
+            return redirect('thread_detail', thread_id=thread.id)
+    else:
+        form = CommentForm()
+
+    comments = Comment.objects.filter(thread=thread, is_deleted=False).select_related('author').order_by('created_at')
+
+    return render(request, 'thread_detail.html', {
+        'thread': thread,
+        'form': form,
+        'comments': comments
+    })
+
 
 # ----- Comment Views -----
-@login_required
-def create_comment(request):
-    if request.method == "POST":
-        thread_id = request.POST.get("thread_id")
-        poll_id = request.POST.get("poll_id")
-        parent_id = request.POST.get("parent_id")
-        content = request.POST.get("content")
-        attachment = request.FILES.get("attachment")
+def create_comment(request, thread_id, parent_id=None):
+    thread = get_object_or_404(Thread, pk=thread_id)
+    parent_comment = None
 
-        thread = get_object_or_404(Thread, id=thread_id) if thread_id else None
-        poll = get_object_or_404(Poll, id=poll_id) if poll_id else None
-        parent = get_object_or_404(Comment, id=parent_id) if parent_id else None
+    if parent_id:
+        parent_comment = get_object_or_404(Comment, pk=parent_id, thread=thread)
 
-        if content and (thread or poll):
-            comment = Comment(
-                thread=thread,
-                poll=poll,
-                author=request.user,
-                parent=parent,
-                content=content,
-                attachment=attachment
-            )
-            comment.save()
-            return render(request, "success.html", {"message": "Comment created successfully!"})
-        return render(request, "error.html", {"message": "Content is required."})
-    threads = Thread.objects.all()
-    polls = Poll.objects.all()
-    return render(request, "create_comment.html", {"threads": threads, "polls": polls})
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        attachment = request.FILES.get('attachment')
+
+        comment = Comment.objects.create(
+            thread=thread,
+            author=request.user,
+            content=content,
+            parent=parent_comment,
+            attachment=attachment
+        )
+        return redirect('thread_detail', thread_id=thread.id)
+
+    return render(request, 'create_comment.html', {
+        'thread': thread,
+        'parent_comment': parent_comment,
+    })
+
 
 @login_required
 def update_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id, author=request.user)
     if request.method == "POST":
-        content = request.POST.get("content")
-        attachment = request.FILES.get("attachment")
-
-        if content:
+        new_content = request.POST.get("content")
+        if new_content:
             CommentEditHistory.objects.create(
                 user=request.user,
                 comment=comment,
                 old_content=comment.content,
-                new_content=content
+                new_content=new_content
             )
-            comment.content = content
-            if attachment:
-                comment.attachment = attachment
+            comment.content = new_content
             comment.save()
             return render(request, "success.html", {"message": "Comment updated successfully!"})
-        return render(request, "error.html", {"message": "Content is required."})
+        return render(request, "error.html", {"message": "New content is required."})
     return render(request, "update_comment.html", {"comment": comment})
+
 
 @login_required
 def delete_comment(request, comment_id):
@@ -353,6 +416,7 @@ def delete_comment(request, comment_id):
         comment.save()
         return render(request, "success.html", {"message": "Comment deleted successfully!"})
     return render(request, "confirm_delete.html", {"object": comment, "type": "comment"})
+
 
 @login_required
 def vote_comment(request, comment_id):
@@ -369,31 +433,39 @@ def vote_comment(request, comment_id):
         return render(request, "error.html", {"message": "Invalid vote type."})
     return render(request, "vote_comment.html", {"comment": comment})
 
+
 def view_comment_edit_history(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
-    history = CommentEditHistory.objects.filter(comment=comment).order_by('-edited_at')
+    history = CommentEditHistory.objects.filter(comment=comment).order_by("-edited_at")
     return render(request, "comment_edit_history.html", {"comment": comment, "history": history})
-
 
 # ----- Poll Views -----
 @login_required
 def create_poll(request):
-    if request.method == "POST":
-        thread_id = request.POST.get("thread_id")
-        question = request-linking-to-another-sectionrequest.POST.get("question")
-        options = request.POST.getlist("options")
+    if request.method == 'POST':
+        question = request.POST.get('question')
+        options = request.POST.getlist('options')
+        thread_id = request.POST.get('thread')
+        if question and options and thread_id:
+            poll = Poll.objects.create(
+                question=question,
+                thread_id=thread_id
+            )
+            for option in options:
+                if option:
+                    poll.options.create(text=option)
+            return redirect('thread_detail', thread_id=thread_id)
+        return render(request, 'error.html', {'message': 'Question, options, and thread are required.'})
 
-        thread = get_object_or_404(Thread, id=thread_id)
-        if question and len(options) >= 2:
-            poll = Poll(thread=thread, question=question)
-            poll.save()
-            for option_text in options:
-                if option_text.strip():
-                    PollOption.objects.create(poll=poll, text=option_text)
-            return render(request, "success.html", {"message": "Poll created successfully!"})
-        return render(request, "error.html", {"message": "Question and at least two options are required."})
-    threads = Thread.objects.all()
-    return render(request, "create_poll.html", {"threads": threads})
+    forum_id = request.GET.get('forum')
+    threads = Thread.objects.filter(is_deleted=False)
+    if forum_id:
+        forum = Forum.objects.get(id=forum_id)
+        threads = threads.filter(category__in=forum.categories.all())
+    return render(request, 'create_poll.html', {
+        'threads': threads,
+        'forum_id': forum_id
+    })
 
 @login_required
 def update_poll(request, poll_id):
@@ -444,3 +516,39 @@ def view_poll_results(request, poll_id):
     ]
     return render(request, "poll_results.html", {"poll": poll, "results": results, "total_votes": total_votes})
 
+
+@login_required
+def confirm_delete(request, id):
+    obj = None
+    obj_type = None
+
+    for model, type_name in [
+        (Thread, 'thread'),
+        (Comment, 'comment'),
+        (Category, 'category'),
+        (Tag, 'tag'),
+        (Forum, 'forum'),
+        (Poll, 'poll'),
+    ]:
+        try:
+            obj = get_object_or_404(model, id=id)
+            obj_type = type_name
+            break
+        except model.DoesNotExist:
+            continue
+
+    if not obj:
+        return render(request, 'error.html', {'message': 'Object not found.'})
+
+    if obj_type in ['thread', 'comment', 'poll'] and obj.author != request.user:
+        return render(request, 'error.html', {'message': 'You do not have permission to delete this item.'})
+
+    if request.method == 'POST':
+        if obj_type in ['thread', 'comment']:
+            obj.is_deleted = True
+            obj.save()
+        else:
+            obj.delete()
+        return redirect('recent_activity')
+
+    return render(request, 'confirm_delete.html', {'object': obj, 'type': obj_type})

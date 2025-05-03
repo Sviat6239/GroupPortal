@@ -12,3 +12,7 @@ def about(request):
 
 def dashboard(request):
     return render(request, 'dashboard.html')
+
+
+def create(request):
+    return render(request, "create_template.html")

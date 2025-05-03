@@ -1,28 +1,40 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <div class="container mt-5">
     <div class="card shadow-sm">
         <div class="card-header">
-            <h2>Edit History for Comment</h2>
+            <h2>Comment Edit History</h2>
         </div>
         <div class="card-body">
+            <p><strong>Comment:</strong> {{ comment.content|truncatewords:10 }}</p>
+            <p><strong>Author:</strong> {{ comment.author.username }}</p>
             {% if history %}
-            <ul class="list-group">
-                {% for edit in history %}
-                <li class="list-group-item">
-                    <p><strong>Edited by:</strong> {{ edit.user.username }}</p>
-                    <p><strong>Edited at:</strong> {{ edit.edited_at }}</p>
-                    <p><strong>Old Content:</strong> {{ edit.old_content }}</p>
-                    <p><strong>New Content:</strong> {{ edit.new_content }}</p>
-                </li>
-                {% endfor %}
-            </ul>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Edited By</th>
+                        <th>Old Content</th>
+                        <th>New Content</th>
+                        <th>Edited At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in history %}
+                    <tr>
+                        <td>{{ entry.user.username }}</td>
+                        <td>{{ entry.old_content|truncatewords:10 }}</td>
+                        <td>{{ entry.new_content|truncatewords:10 }}</td>
+                        <td>{{ entry.edited_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             {% else %}
             <p>No edit history available.</p>
             {% endif %}
-            <a href="{% url 'home' %}" class="btn btn-secondary animated-button mt-3">Back</a>
+            <a href="{% url 'thread_detail' comment.thread.id %}" class="btn btn-secondary">Back to Thread</a>
         </div>
     </div>
 </div>
-<button id="back-to-top" title="Back to Top">↑</button>
 {% endblock %}

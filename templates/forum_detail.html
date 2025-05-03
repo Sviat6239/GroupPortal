@@ -7,7 +7,7 @@
 <h3>{{ forum.name }} - Overview</h3>
 </div>
 <div class="card-body">
-<p>{{ forum.description }}</p>
+<p>{{ forum.description|default:"No description provided." }}</p>
 <a href="{% url 'create_thread' %}?forum={{ forum.id }}" class="btn btn-primary mb-2">Create Thread</a>
 <a href="{% url 'create_poll' %}?forum={{ forum.id }}" class="btn btn-primary mb-2">Create Poll</a>
 </div>
@@ -20,7 +20,7 @@
 {% for thread in threads %}
 <div class="mb-3">
 <a href="{% url 'thread_detail' thread.id %}">{{ thread.title }}</a>
-<p><small>Posted by {{ thread.author.username }} on {{ thread.created_at }}</small></p>
+<p><small>Posted by {{ thread.author.username }} on {{ thread.created_at }}{% if thread.category %} in {{ thread.category.name }}{% endif %}</small></p>
 </div>
 {% empty %}
 <p>No threads in this forum.</p>

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Welcome</h1>
+
+    <div class="btn-group" role="group" aria-label="Create Actions">
+        <a href="{% url 'create_thread' %}" class="btn btn-primary">Create Thread</a>
+        <a href="{% url 'create_poll' %}" class="btn btn-info">Create Poll</a>
+        <a href="{% url 'create_forum' %}" class="btn btn-success">Create Forum</a>
+    </div>
+</div>
+{% endblock %}

@@ -10,7 +10,7 @@
                 {% csrf_token %}
                 {{ form.as_p }}
                 <button type="submit" class="btn btn-primary animated-button">Update Category</button>
-                <a href="{% url 'home' %}" class="btn btn-secondary animated-button">Cancel</a>
+                <a href="{% url 'index' %}" class="btn btn-secondary animated-button">Cancel</a>
             </form>
         </div>
     </div>
