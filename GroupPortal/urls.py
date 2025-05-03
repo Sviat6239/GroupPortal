@@ -12,6 +12,7 @@ from forum.views import (
     forum_detail, forum_list
 )
 from authentification.views import register_view, login_view, logout_view
+from diary.views import diary_view, add_student, add_subject, add_grade, edit_student, edit_subject, edit_grade
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -59,8 +60,22 @@ urlpatterns = [
     path('add-category/', add_category, name='add_category'),
     path('add-tag/', add_tag, name='add_tag'),
     path('confirm-action/', confirm_action, name='confirm_action'),
+    path('confirm-delete/', confirm_delete, name='confirm_delete'),
+    path('poll-results/', view_poll_results, name='poll_results'),
+    path('recent/', recent_activity, name='recent_activity'),
+
+    # Diary URLs
+    path('diary/', diary_view, name='diary'),
+    path('add-student/', add_student, name='add-student'),
+    path('edit-student/<int:student_id>/', edit_student, name='edit-student'),
+    path('add-subject/', add_subject, name='add-subject'),
+    path('edit-subject/<int:subject_id>/', edit_subject, name='edit-subject'),
+    path('add-grade/', add_grade, name='add-grade'),
+    path('edit-grade/<int:grade_id>/', edit_grade, name='edit-grade'),
+
+
     path('confirm-delete/<int:id>/', confirm_delete, name='confirm_delete'),
     path('poll-results/<int:poll_id>/', view_poll_results, name='poll_results'),
     path('recent/', recent_activity, name='recent_activity'),
     path('creaturepanel/', create, name='creaturepanel'),
-]
+
